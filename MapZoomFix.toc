@@ -1,0 +1,9 @@
+## Interface: 11200
+## Title: |cFFFFFFFFsQMinimapFix|r|cFF00CC00 v0.1|r
+## Author: sQweegle
+## Version: 0.1
+## Notes: Forces a global minimap zoom level for all zones
+## DefaultState: enabled
+
+## AddOn files
+MapZoomFix.lua
