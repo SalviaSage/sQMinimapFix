@@ -6,4 +6,4 @@
 ## DefaultState: enabled
 
 ## AddOn files
-MapZoomFix.lua
+sQMinimapFix.lua
