@@ -1,16 +1,15 @@
 -- Initialize locals
-local currentZoom = Minimap:GetZoom()
 local zoomInHandler = MinimapZoomIn:GetScript("OnClick")	-- Original minimap button handler
 local zoomOutHandler = MinimapZoomOut:GetScript("OnClick")
 
--- Helpers --
-local function updateMinimapButtonState()
-	-- print(currentZoom .. "/" .. Minimap:GetZoomLevels())
-	if (currentZoom >= Minimap:GetZoomLevels()-1) then
+local function updateMinimapButtonState(zoom)
+	if not zoom then return end
+	
+	if (zoom >= Minimap:GetZoomLevels()-1) then
 		-- Disable zoom in, enable zoom out
 		MinimapZoomIn:Disable()
 		MinimapZoomOut:Enable()
-	elseif (currentZoom <= 0) then
+	elseif (zoom <= 0) then
 		-- Disable zoom out, enable zoom in
 		MinimapZoomIn:Enable()
 		MinimapZoomOut:Disable()
@@ -23,30 +22,35 @@ end
 
 -- Main code -- 
 local function eventHandler()
-	if (event == "ZONE_CHANGED") or 
-			(event == "ZONE_CHANGED_INDOORS") or
-			(event == "ZONE_CHANGED_NEW_AREA") then		-- Set zoom level when changing zone
-		Minimap:SetZoom(currentZoom)
-		updateMinimapButtonState()
-		-- print(this:GetName() .. ":\n" .. event .. ", zoom: " .. currentZoom)
-	elseif (this:GetName() == "MinimapZoomIn") then		-- Get new zoom level when user adjusts zoom
-		zoomInHandler()
-		currentZoom = Minimap:GetZoom()
-		-- print(this:GetName() .. ":\n" .. "zoom: " .. currentZoom)
-	elseif (this:GetName() == "MinimapZoomOut") then
-		zoomOutHandler()
-		currentZoom = Minimap:GetZoom()
-		-- print(this:GetName() .. ":\n" .. "zoom: " .. currentZoom)
+	
+	if (event == "MINIMAP_UPDATE_ZOOM") then			-- Force minimap zoom level
+		-- print(event)
+		if (Minimap:GetZoom() ~= GetCVar("minimapZoom")) then
+			Minimap:SetZoom(GetCVar("minimapZoom"))
+		end
+		updateMinimapButtonState(Minimap:GetZoom())
+		-- print(GetCVar("minimapZoom"))
+	else
+		if (this:GetName() == "MinimapZoomIn") then		-- Update when user adjusts zoom level
+			-- print(this:GetName())
+			zoomInHandler()
+		elseif (this:GetName() == "MinimapZoomOut") then
+			-- print(this:GetName())
+			zoomOutHandler()
+		end
+		
+		local currentZoom = Minimap:GetZoom()
+		-- print(currentZoom)
+		SetCVar("minimapZoom", currentZoom)
 	end
+	SetCVar("minimapInsideZoom", currentZoom)
 end
 
 -- Event registration -- 
-local eFrame = CreateFrame("Frame", "MZF event frame", UIParent)
+local eFrame = CreateFrame("Frame", "sQMinimapFix", UIParent)
 eFrame:Hide()
-eFrame:RegisterEvent("ZONE_CHANGED")
-eFrame:RegisterEvent("ZONE_CHANGED_INDOORS")
-eFrame:RegisterEvent("ZONE_CHANGED_NEW_AREA")		-- Zone change events
-
+eFrame:RegisterEvent("MINIMAP_UPDATE_ZOOM")			-- Capture minimap zoom update events
 eFrame:SetScript("OnEvent", eventHandler)
-MinimapZoomIn:SetScript("OnClick", eventHandler)
-MinimapZoomOut:SetScript("OnClick", eventHandler)	-- Minimap zoom in and out buttons
+
+MinimapZoomIn:SetScript("OnClick", eventHandler)	-- Capture user clicks on minimap zoom in and out buttons
+MinimapZoomOut:SetScript("OnClick", eventHandler)
